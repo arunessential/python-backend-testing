@@ -22,35 +22,29 @@
 
     h2 {
       color: #2c3e50;
-      text-shadow: 1px 1px 2px #ccc;
       margin: 0;
     }
 
     h3 {
       color: #34495e;
-      margin-top: 50px;
+      margin-top: 40px;
     }
 
     table {
       width: 70%;
       border-collapse: collapse;
       margin-top: 20px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      background-color: #ffffff;
-      border-radius: 6px;
-      overflow: hidden;
+      background-color: #fff;
     }
 
     th, td {
-      padding: 14px 18px;
+      padding: 12px;
       text-align: left;
     }
 
     th {
       background-color: #2980b9;
       color: white;
-      font-size: 16px;
-      letter-spacing: 1px;
     }
 
     tr:nth-child(even) {
@@ -59,80 +53,131 @@
 
     tr:hover {
       background-color: #e1ecf4;
-      transition: 0.2s ease-in-out;
     }
 
-    input[type="text"], input[type="email"] {
+    input {
       padding: 10px;
-      width: 200px;
       margin-right: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 15px;
     }
 
     button {
-      padding: 10px 18px;
-      background-color: #27ae60;
+      padding: 8px 14px;
       border: none;
       color: white;
-      font-size: 15px;
-      border-radius: 4px;
       cursor: pointer;
+      border-radius: 4px;
     }
 
-    button:hover {
-      background-color: #219150;
+    .add-btn {
+      background-color: #27ae60;
+    }
+
+    .list-btn {
+      background-color: #2980b9;
+      margin-top: 20px;
+    }
+
+    .delete-btn {
+      background-color: #e74c3c;
     }
 
     #formMsg {
-      margin-top: 12px;
+      margin-top: 10px;
       font-weight: bold;
-      color: #d63031;
     }
   </style>
 </head>
+
 <body>
+
   <div class="header">
-    <img src="https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png" alt="GCP Logo">
-    <h2>Welcome to multicloud devops </h2>
+    <img src="https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png">
+    <h2>Welcome to Multicloud DevOps</h2>
   </div>
 
+  <!-- List Users Button -->
+  <button class="list-btn" onclick="loadUsers()">List Users</button>
+
+  <!-- User Table -->
   <table id="userTable">
-    <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Actions</th>
+    </tr>
   </table>
 
+  <!-- Add User Form -->
   <h3>Add New User</h3>
   <form id="userForm">
     <input type="text" id="name" placeholder="Enter Name" required>
     <input type="email" id="email" placeholder="Enter Email" required>
-    <button type="submit">Add User</button>
+    <button class="add-btn" type="submit">Add User</button>
   </form>
+
   <p id="formMsg"></p>
 
   <script>
-    const backendIP = "http://3.80.111.134:5000"; // for public deployment
-    // const backendIP = ""; // dont pass any value and uncomment this  linne for proxy and comment above line
+    const backendIP = "http://3.80.111.134:5000";
 
+    // Load Users
     function loadUsers() {
+      const table = document.getElementById("userTable");
+
+      // Reset table
+      table.innerHTML = `
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      `;
+
       fetch(`${backendIP}/users`)
-        .then(response => response.json())
+        .then(res => res.json())
         .then(users => {
-          const table = document.getElementById("userTable");
           users.forEach(user => {
             const row = table.insertRow();
+
             row.insertCell(0).innerText = user.id;
             row.insertCell(1).innerText = user.name;
             row.insertCell(2).innerText = user.email;
+
+            const actionCell = row.insertCell(3);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.innerText = "Delete";
+            deleteBtn.className = "delete-btn";
+
+            deleteBtn.onclick = () => deleteUser(user.id);
+
+            actionCell.appendChild(deleteBtn);
           });
         })
-        .catch(err => {
-          console.error("Failed to load users:", err);
-        });
+        .catch(err => console.error(err));
     }
 
+    // Delete User
+    function deleteUser(id) {
+      if (!confirm("Delete this user?")) return;
+
+      fetch(`${backendIP}/users/delete/${id}`, {
+        method: "DELETE"
+      })
+      .then(res => res.json())
+      .then(result => {
+        alert(result.message || result.error);
+        loadUsers();
+      })
+      .catch(err => console.error(err));
+    }
+
+    // Add User
     document.getElementById("userForm").addEventListener("submit", function(e) {
       e.preventDefault();
+
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
 
@@ -143,16 +188,18 @@
       })
       .then(res => res.json())
       .then(result => {
-        document.getElementById("formMsg").textContent = result.message || result.error;
-        location.reload();
+        document.getElementById("formMsg").textContent =
+          result.message || result.error;
+
+        document.getElementById("userForm").reset();
+        loadUsers();
       })
-      .catch(err => {
-        document.getElementById("formMsg").textContent = "Error adding user.";
-        console.error("Add error:", err);
-      });
+      .catch(err => console.error(err));
     });
 
+    // Auto load on page start
     loadUsers();
   </script>
+
 </body>
 </html>
