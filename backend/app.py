@@ -7,7 +7,7 @@ CORS(app)
 
 # Database Configuration
 db_config = {
-    'host': 'database-1.cl8o4wyiy79q.us-east-1.rds.amazonaws.com',
+    'host': 'database-1.c0te2kwm8fcz.us-east-1.rds.amazonaws.com',
     'user': 'admin',
     'password': 'Cloud123',
     'database': 'dev'
